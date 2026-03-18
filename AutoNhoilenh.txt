@@ -1,0 +1,40 @@
+Dưới đây là tóm tắt toàn bộ logic hoạt động của ứng dụng **FUTURESTRADE.IO** sau khi đã được tối ưu và xây dựng lại theo yêu cầu của bạn:
+
+### 1. Hệ thống Giao dịch Nhanh (1 + 5 Sequence)
+Đây là trái tim của ứng dụng, được thiết kế để tự động hóa chiến thuật nhồi lệnh dương (Pyramiding) ngay khi mở vị thế:
+*   **Điểm xuất phát:** Khi click **LONG** hoặc **SHORT**, hệ thống thực hiện lệnh đầu tiên (Lệnh gốc).
+    *   Nếu ô **Limit Entry** để trống: Vào lệnh **Market** ngay lập tức.
+    *   Nếu ô **Limit Entry** có giá: Đặt lệnh **Limit** chờ khớp tại giá đó.
+*   **Kích hoạt mặc định:** Sau khi lệnh đầu tiên được thiết lập, hệ thống tự động đặt **5 lớp lệnh điều kiện (Stop Market)** tiếp theo theo hướng xu hướng.
+*   **Khoảng cách lệnh (Step %):** Mỗi lệnh trong 5 lớp này cách nhau một khoảng bằng `%` mà bạn đã cài đặt (Long là tăng dần, Short là giảm dần).
+*   **Ký quỹ:** Mỗi lớp nhồi lệnh sử dụng đúng số tiền **Ký quỹ ban đầu** (USDT/USDC) mà bạn đã nhập.
+
+---
+
+### 2. Logic "Nhồi lệnh" & Bảo vệ (Cái Khiên - Shield)
+Cái khiên trên danh sách vị thế biểu thị trạng thái của Bot nhồi lệnh tự động:
+*   <span style="color: #FFC107">**Khiên Vàng (Active):**</span> Trạng thái mặc định khi mở lệnh. Bot đang theo dõi vị thế để nhồi thêm.
+*   <span style="color: #EF4444">**Khiên Đỏ (Inactive):**</span> Khi bạn click vào khiên để hủy, Bot sẽ dừng việc đặt thêm các lệnh điều kiện mới.
+*   **Tự động dời Stoploss (STL):** Mỗi khi một lệnh nhồi được khớp thành công (khiến Size vị thế tăng lên), hệ thống sẽ **tự động tính toán lại và dời SL về điểm hòa vốn (Breakeven - Hòa lệnh)** của toàn bộ vị thế mới.
+*   **Cơ chế Refill (Lấp đầy):** Nếu cả 5 lệnh nhồi đầu tiên đều khớp hết, hệ thống sẽ **tự động tính toán và đặt tiếp 5 lệnh nhồi mới** để duy trì mô hình kim tự tháp liên tục theo xu hướng.
+
+---
+
+### 3. Chế độ Demo & Mô phỏng (Simulator)
+Chế độ Demo được xây dựng để chạy giống 100% tài khoản thật mà không cần nạp tiền:
+*   **Số dư giả lập:** Bắt đầu với $10,000 USDT ảo.
+*   **Lệnh chờ (Pending Orders):** Các lệnh Limit hoặc Stop Market sẽ hiển thị đầy đủ trong bảng lệnh chờ.
+*   **Khớp lệnh dựa trên giá thật:** Bot sử dụng luồng giá WebSocket trực tiếp từ Binance. Khi giá thị trường chạm đến giá kích hoạt của lệnh Demo, lệnh đó sẽ được **tự động khớp**, cập nhật vào vị thế và dời SL y như đánh thật.
+
+---
+
+### 4. Tương tác & Trải nghiệm Người dùng (UI/UX)
+*   **Chọn Coin nhanh:** Chỉ khi bạn click chính xác vào **Tên Coin** (ví dụ: `SOL/USDT`) trong danh sách vị thế, Trading Pair mới thay đổi. Các vùng khác trên thẻ vị thế được dùng để chỉnh SL hoặc xem PNL.
+*   **Nhập Coin thủ công:** Ô **Trading Pair** cho phép gõ tên coin (ví dụ: `btc`, `sol`). Khi click ra ngoài (Blur), hệ thống sẽ tự động viết hoa, thêm `USDT` và kiểm tra xem Coin đó có tồn tại trên sàn hay không.
+*   **Quản lý SL trực tiếp:** Bạn có thể nhập giá Stoploss trực tiếp trên từng thẻ vị thế đang mở và nhấn Enter để cập nhật ngay lập tức.
+
+### 5. Luồng dữ liệu kỹ thuật
+*   **WebSocket:** Cập nhật giá Mark Price và PNL thời gian thực 24/7.
+*   **API Polling:** Cập nhật số dư tài khoản, danh sách vị thế và lệnh chờ mỗi 3 giây để đảm bảo đồng bộ với sàn Binance.
+
+Ứng dụng hiện tại đã tối ưu hóa tối đa cho việc **Trade theo xu hướng (Trend Following)** và **Quản trị rủi ro tự động**, giúp bạn không cần phải canh biểu đồ để dời SL thủ công khi nhồi lệnh.
