@@ -304,7 +304,7 @@ function renderPositions() {
 
         html += `
         <div class="pos-card ${cClass}">
-            <div class="flex items-center justify-between relative z-10 gap-4">
+            <div class="pos-card-content flex items-center justify-between relative z-10 gap-4">
                 <!-- Pair & Type -->
                 <div class="flex items-center gap-4 min-w-[140px]">
                     <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center shrink-0 border border-white/5">
@@ -318,7 +318,7 @@ function renderPositions() {
                 </div>
 
                 <!-- Stats Grid -->
-                <div class="flex items-center gap-8 text-[10px] flex-1 justify-center">
+                <div class="pos-stats-grid flex items-center gap-8 text-[10px] flex-1 justify-center">
                     <div class="flex flex-col">
                         <span class="text-gray-600 font-bold uppercase tracking-tighter mb-0.5">Entry Price</span>
                         <span class="font-mono font-bold text-gray-300">$${fNum(entryPrice, 2)}</span>
@@ -339,7 +339,7 @@ function renderPositions() {
                 </div>
 
                 <!-- PNL & Actions -->
-                <div class="flex items-center gap-6">
+                <div class="pos-action-group flex items-center gap-6">
                     <div class="text-right">
                         <p class="text-xs font-black uppercase tracking-widest text-gray-600 mb-0.5">Net PNL</p>
                         <p class="text-lg font-black ${pnlCol} tracking-tight leading-none">${pSign}$${fNum(Math.abs(unPnl), 2)}</p>
@@ -348,11 +348,13 @@ function renderPositions() {
                     
                     <div class="flex items-center gap-2">
                         <button onclick="toggleShield(event, '${p.symbol}')"
+                                title="Trailing Shield"
                                 class="w-10 h-10 rounded-xl border transition-all active:scale-95 flex items-center justify-center
                                 ${isShieldActive ? 'bg-indigo-500 border-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-white/5 border-white/10 text-gray-500 hover:text-indigo-400'}">
                             <i data-lucide="${isShieldActive ? 'shield-check' : 'shield'}" class="w-5 h-5"></i>
                         </button>
                         <button onclick="confirmCloseMarket(event, '${p.symbol}', ${amt}, ${unPnl})"
+                                title="Close Position"
                                 class="w-10 h-10 rounded-xl bg-danger/10 border border-danger/20 text-danger flex items-center justify-center active:scale-95 hover:bg-danger hover:text-white transition-all shadow-lg hover:shadow-danger/20">
                             <i data-lucide="power" class="w-4 h-4"></i>
                         </button>
@@ -689,22 +691,22 @@ function renderOrders() {
         
         html += `
         <tr class="hover:bg-white/[0.01] transition-colors group">
-            <td class="py-4 px-6">
+            <td class="py-4 px-6" data-label="Asset">
                 <div class="flex items-center gap-3">
                     <div class="w-1.5 h-6 rounded-full ${isBuy ? 'bg-success/20' : 'bg-danger/20'} border-l-2 ${isBuy ? 'border-success' : 'border-danger'}"></div>
                     <span class="font-black text-white tracking-tight uppercase">${o.symbol}</span>
                 </div>
             </td>
-            <td class="py-4 px-6 font-mono text-gray-500 text-[10px]">#${String(o.orderId).slice(-6)}</td>
-            <td class="py-4 px-6 text-center">
+            <td class="py-4 px-6 font-mono text-gray-500 text-[10px]" data-label="ID">#${String(o.orderId).slice(-6)}</td>
+            <td class="py-4 px-6 text-center" data-label="Side">
                 <span class="px-2 py-0.5 rounded-lg bg-white/5 font-black text-[9px] ${col}">${o.side}</span>
             </td>
-            <td class="py-4 px-6 font-mono font-bold text-gray-200">$${fNum(price, 2)}</td>
-            <td class="py-4 px-6 text-gray-400 font-medium">${fNum(o.origQty, 3)} <span class="text-[10px] opacity-40">Qty</span></td>
-            <td class="py-4 px-6">
+            <td class="py-4 px-6 font-mono font-bold text-gray-200" data-label="Trigger Price">$${fNum(price, 2)}</td>
+            <td class="py-4 px-6 text-gray-400 font-medium" data-label="Size">${fNum(o.origQty, 3)} <span class="text-[10px] opacity-40">Qty</span></td>
+            <td class="py-4 px-6" data-label="Type">
                 <span class="text-[10px] font-black text-indigo-400/80 uppercase tracking-tighter">${o.type.replace('_', ' ')}</span>
             </td>
-            <td class="py-4 px-6 text-right">
+            <td class="py-4 px-6 text-right" data-label="Action">
                 <button onclick="cancelOrder('${o.symbol}', ${o.orderId})" 
                         class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-danger/10 hover:text-danger border border-transparent hover:border-danger/20 transition-all active:scale-90">
                     <i data-lucide="x" class="w-3.5 h-3.5"></i>

@@ -130,6 +130,136 @@
             background: rgba(0,0,0,0.3) !important; border: 1px solid rgba(255,255,255,0.1) !important;
             border-radius: 0.5rem; text-align: center; color: white !important; font-weight: 700 !important;
         }
+
+        /* Remove Number Spinners */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+            appearance: none;
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .glass-panel {
+                padding: 1.25rem !important;
+                border-radius: 1.25rem;
+            }
+            
+            .max-w-\[1500px\] {
+                padding: 1rem !important;
+            }
+
+            header {
+                padding: 1.5rem !important;
+                gap: 2rem !important;
+            }
+
+            .api-config-container {
+                width: 100%;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 1rem !important;
+            }
+
+            .api-inputs-wrapper {
+                flex-direction: column !important;
+                gap: 0.75rem !important;
+            }
+
+            .api-inputs-wrapper input {
+                width: 100% !important;
+                height: 3rem !important;
+            }
+
+            .api-actions-wrapper {
+                width: 100%;
+                justify-content: space-between !important;
+            }
+
+            /* Responsive Tables (Pipeline) */
+            .responsive-table thead {
+                display: none;
+            }
+
+            .responsive-table tbody tr {
+                display: block;
+                padding: 1.25rem !important;
+                border-bottom: 1px solid rgba(255,255,255,0.05);
+                position: relative;
+            }
+
+            .responsive-table tbody td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.5rem 0 !important;
+                border: none !important;
+                text-align: right !important;
+            }
+
+            .responsive-table tbody td::before {
+                content: attr(data-label);
+                font-weight: 800;
+                text-transform: uppercase;
+                font-size: 0.65rem;
+                color: #64748b;
+                letter-spacing: 0.05em;
+                margin-right: 1rem;
+                text-align: left;
+            }
+
+            .responsive-table tbody td:first-child {
+                border-bottom: 1px solid rgba(255,255,255,0.05);
+                margin-bottom: 0.5rem;
+                padding-bottom: 0.75rem !important;
+            }
+            
+            .responsive-table tbody td:first-child::before {
+                display: none;
+            }
+
+            .responsive-table tbody td:last-child {
+                border-top: 1px solid rgba(255,255,255,0.05);
+                margin-top: 0.5rem;
+                padding-top: 0.75rem !important;
+            }
+
+            /* Position Cards */
+            .pos-card-content {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 1.5rem !important;
+            }
+
+            .pos-stats-grid {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important;
+                gap: 1.25rem !important;
+                border-top: 1px solid rgba(255,255,255,0.05);
+                border-bottom: 1px solid rgba(255,255,255,0.05);
+                padding: 1.25rem 0 !important;
+            }
+
+            .pos-action-group {
+                justify-content: space-between !important;
+                width: 100%;
+            }
+
+            /* Modals */
+            #order-modal, #close-modal {
+                max-width: 100% !important;
+                margin: 0;
+                border-radius: 1.5rem;
+            }
+            
+            .modal-content-padding {
+                padding: 1.5rem !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -162,25 +292,27 @@
             </div>
 
             <!-- API CONFIG SECTION -->
-            <div class="flex flex-wrap items-center gap-4 bg-black/20 p-4 rounded-2xl border border-white/5">
-                <div class="flex flex-col gap-1">
+            <div class="api-config-container flex flex-wrap items-center gap-4 bg-black/20 p-4 rounded-2xl border border-white/5">
+                <div class="flex flex-col gap-1 w-full lg:w-auto">
                     <label class="text-[9px] font-black text-gray-500 uppercase ml-1">API Credentials</label>
-                    <div class="flex gap-2">
+                    <div class="api-inputs-wrapper flex gap-2">
                         <input type="password" id="api-key" placeholder="API Key" class="input-glass h-10 w-40 text-xs px-4">
                         <input type="password" id="api-secret" placeholder="Secret Key" class="input-glass h-10 w-40 text-xs px-4">
-                        <button onclick="applyApiConfig()" class="h-10 px-4 bg-indigo-500 text-white rounded-xl text-xs font-black uppercase hover:bg-indigo-600 transition-colors">Apply</button>
-                        <button onclick="document.getElementById('qr-upload').click()" class="h-10 w-10 flex items-center justify-center bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors">
-                            <i data-lucide="qr-code" class="w-4 h-4 text-gray-400"></i>
-                        </button>
+                        <div class="api-actions-wrapper flex gap-2">
+                            <button onclick="applyApiConfig()" class="h-10 px-4 bg-indigo-500 text-white rounded-xl text-xs font-black uppercase hover:bg-indigo-600 transition-colors">Apply</button>
+                            <button onclick="document.getElementById('qr-upload').click()" class="h-10 w-10 flex items-center justify-center bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors">
+                                <i data-lucide="qr-code" class="w-4 h-4 text-gray-400"></i>
+                            </button>
+                        </div>
                         <input type="file" id="qr-upload" accept="image/*" class="hidden" onchange="handleQRUpload(event)">
                     </div>
                 </div>
-                <div class="h-10 w-px bg-white/10 mx-2"></div>
-                <div class="flex items-center gap-3">
-                    <button onclick="activateDemoMode()" class="h-10 px-5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-xl text-xs font-black uppercase hover:bg-indigo-500 hover:text-white transition-all">Demo Mode</button>
-                    <div class="flex items-center gap-3 px-4 h-10 bg-black/40 rounded-xl border border-white/5">
+                <div class="hidden lg:block h-10 w-px bg-white/10 mx-2"></div>
+                <div class="flex items-center justify-between w-full lg:w-auto gap-3">
+                    <button onclick="activateDemoMode()" class="h-10 px-5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-xl text-xs font-black uppercase hover:bg-indigo-500 hover:text-white transition-all flex-1 lg:flex-none">Demo Mode</button>
+                    <div class="flex items-center gap-3 px-4 h-10 bg-black/40 rounded-xl border border-white/5 flex-1 lg:flex-none">
                         <div id="conn-status" class="w-2 h-2 rounded-full bg-slate-500 animate-pulse"></div>
-                        <span id="conn-text" class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Offline</span>
+                        <span id="conn-text" class="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center flex-1">Offline</span>
                     </div>
                 </div>
             </div>
@@ -218,7 +350,7 @@
                         </div>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-xs text-left">
+                        <table class="w-full text-xs text-left responsive-table">
                             <thead class="bg-black/20 text-gray-500 font-black uppercase tracking-widest">
                                 <tr>
                                     <th class="py-5 px-6">Symbol</th>
@@ -315,9 +447,10 @@
                                     <button onclick="setAmountPct(0.2)" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-all">20%</button>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-3 bg-black/40 rounded-2xl p-2 border border-white/5">
-                                <input type="number" id="trade-amount" value="0" class="flex-1 bg-transparent text-center font-black text-xl outline-none px-4">
-                                <select id="trade-unit" class="bg-indigo-500 text-white font-black text-xs px-5 py-2.5 rounded-xl outline-none cursor-pointer">
+                            <div class="flex items-center gap-1 bg-black/40 rounded-2xl p-1.5 border border-white/5 focus-within:border-indigo-500/30 transition-all">
+                                <input type="number" id="trade-amount" value="0" class="flex-1 bg-transparent text-center font-black text-2xl outline-none pl-12 pr-4">
+                                <div class="h-10 w-px bg-white/5 mx-1"></div>
+                                <select id="trade-unit" class="bg-indigo-500 text-white font-black text-[10px] px-4 py-3 rounded-xl outline-none cursor-pointer hover:bg-indigo-600 transition-colors uppercase">
                                     <option value="USDT">USDT</option>
                                     <option value="USDC">USDC</option>
                                 </select>
@@ -409,7 +542,7 @@
                 <p class="text-[10px] font-black text-gray-500 uppercase mb-1">Projected PPNL</p>
                 <p id="close-modal-pnl" class="text-2xl font-black text-success">+$0.00</p>
             </div>
-            <div class="flex gap-4">
+            <div class="flex gap-4 p-8 pt-0">
                 <button onclick="closeCloseModal()" class="flex-1 py-4 rounded-xl text-xs font-black uppercase bg-white/5 hover:bg-white/10 transition-all">Cancel</button>
                 <button id="close-modal-confirm-btn" class="flex-[2] py-4 rounded-xl text-xs font-black uppercase bg-danger text-white shadow-lg shadow-danger/20 hover:brightness-110 active:scale-95 transition-all">Liquidate Now</button>
             </div>
