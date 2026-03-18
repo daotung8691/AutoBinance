@@ -223,11 +223,43 @@
             }
 
             .responsive-table tbody td:last-child {
-                border-top: 1px solid rgba(255,255,255,0.05);
-                margin-top: 0.5rem;
-                padding-top: 0.75rem !important;
+                border-top: none !important;
+                margin-top: 0;
+                padding-top: 0.5rem !important;
             }
 
+            /* Compact Order Rows for Mobile */
+            #orders-list tr {
+                display: flex !important;
+                flex-direction: row !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                padding: 0.75rem 0.5rem !important;
+                gap: 0.5rem;
+            }
+            #orders-list td {
+                display: block !important;
+                padding: 0 !important;
+                border: none !important;
+                text-align: left !important;
+                width: auto !important;
+            }
+            #orders-list td::before {
+                display: none !important;
+            }
+            #orders-list td[data-label="ID"], 
+            #orders-list td[data-label="Type"] {
+                display: none !important;
+            }
+            #orders-list td[data-label="Price"] {
+                flex: 1;
+                text-align: center !important;
+            }
+            #orders-list td[data-label="Action"] {
+                min-width: 100px;
+                text-align: right !important;
+            }
+        
             /* Position Cards */
             .pos-card-content {
                 flex-direction: column !important;
@@ -259,6 +291,10 @@
             .modal-content-padding {
                 padding: 1.5rem !important;
             }
+
+            .mobile-collapsed {
+                display: none !important;
+            }
         }
     </style>
 </head>
@@ -278,9 +314,9 @@
     <!-- NOTIFICATION CONTAINER -->
     <div id="notification-container"></div>
 
-    <div class="max-w-[1500px] mx-auto p-4 md:p-8 space-y-8">
+    <div class="max-w-[1500px] mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
         <!-- HEADER -->
-        <header class="glass-panel p-6 flex flex-col lg:flex-row justify-between items-center gap-6">
+        <header class="glass-panel p-4 md:p-5 flex flex-col lg:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-5">
                 <div class="w-14 h-14 bg-indigo-500 rounded-2xl flex items-center justify-center shadow-2xl shadow-indigo-500/40 rotate-6 hover:rotate-0 transition-all duration-500">
                     <i data-lucide="shield" class="w-7 h-7 text-white"></i>
@@ -318,19 +354,134 @@
             </div>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <!-- COLUMN B: QUICK TRADE & ACCOUNT (NOW AT TOP FOR MOBILE) -->
+            <div class="lg:col-span-4 flex flex-col gap-8 order-1 lg:order-2">
+                <!-- Account Summary Card -->
+                <div class="glass-panel p-4 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent border-indigo-500/20">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400">Portfolio Status</h3>
+                        <i data-lucide="wallet" class="w-3.5 h-3.5 text-indigo-400"></i>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-end">
+                            <div>
+                                <p class="text-[9px] font-bold text-gray-500 uppercase mb-1">Total Balance</p>
+                                <p id="acc-balance" class="text-2xl font-black text-white">$0.00</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[9px] font-bold text-gray-500 uppercase mb-1">Margin Ratio</p>
+                                <p id="acc-margin" class="text-lg font-black text-gray-100">0.00%</p>
+                            </div>
+                        </div>
+                        <div class="pt-2 border-t border-white/5">
+                            <p class="text-[9px] font-bold text-gray-500 uppercase mb-0.5">Available Balance</p>
+                            <p id="acc-available" class="text-xs font-black text-indigo-400">$0.00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Trade Terminal -->
+                <div class="glass-panel p-4 space-y-3">
+                    <div class="flex justify-between items-center cursor-pointer group" onclick="toggleSection('terminal-main', this)">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="terminal" class="w-3.5 h-3.5 text-indigo-400"></i>
+                            <h3 class="text-[9px] font-black uppercase tracking-[0.2em] text-white">Trade Terminal</h3>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-gray-600 transition-transform"></i>
+                    </div>
+
+                    <div id="terminal-main" class="space-y-3">
+                        <div class="space-y-3">
+                            <div class="space-y-1.5">
+                                <label class="text-[9px] font-black text-gray-500 uppercase ml-1">Asset Pair</label>
+                                <input type="text" id="trade-pair" list="symbols-list" value="BTCUSDT" class="input-glass w-full h-10 text-center text-xs font-black tracking-widest uppercase">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="space-y-1.5 relative">
+                                    <label class="text-[9px] font-black text-gray-500 uppercase ml-1">Target Entry</label>
+                                    <input type="number" id="trade-entry" value="0" class="input-glass w-full h-10 text-center font-bold text-xs">
+                                    <span class="absolute right-3 bottom-3 text-[7px] font-black text-gray-600">Limit</span>
+                                </div>
+                                <div class="space-y-1.5 relative">
+                                    <label class="text-[9px] font-black text-gray-500 uppercase ml-1">Mark Price</label>
+                                    <input type="number" id="trade-mark" value="0" disabled class="input-glass w-full h-10 text-center font-bold text-xs bg-black/40 opacity-50">
+                                    <span class="absolute right-3 bottom-3 text-[7px] font-black text-indigo-500">Live</span>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="space-y-1.5">
+                                    <label class="text-[9px] font-black text-gray-500 uppercase ml-1 flex justify-between">Leverage <span id="disp-max-lev" class="text-indigo-400">x125</span></label>
+                                    <input type="number" id="trade-leverage" value="20" class="input-glass w-full h-10 text-center font-bold text-xs">
+                                </div>
+                                <div class="space-y-1.5">
+                                    <label class="text-[9px] font-black text-gray-500 uppercase ml-1">Stop Loss</label>
+                                    <input type="number" id="trade-sl" class="input-glass w-full h-10 text-center font-bold text-xs" placeholder="Auto">
+                                </div>
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <label class="text-[9px] font-black text-success uppercase ml-1 flex items-center gap-1.5"><i data-lucide="layers" class="w-3 h-3"></i> Pyramiding Step (%)</label>
+                                <input type="number" id="trade-step-pct" value="1" step="0.1" class="input-glass w-full h-10 text-center font-bold text-xs border-success/20">
+                            </div>
+
+                            <div class="space-y-3 pt-3 border-t border-white/5">
+                                <div class="flex justify-between items-center text-[9px] font-black uppercase text-gray-500">
+                                    <div class="flex items-center gap-1.5">
+                                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-indigo-500"></i>
+                                        <span>RISK AMOUNT</span>
+                                    </div>
+                                    <div class="flex gap-1.5">
+                                        <button onclick="setAmountPct(0.1)" class="px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500 hover:text-white transition-all text-[8px] font-black">10%</button>
+                                        <button onclick="setAmountPct(0.15)" class="px-2.5 py-1 rounded-lg bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 transition-all text-[8px] font-black">15%</button>
+                                        <button onclick="setAmountPct(0.2)" class="px-2.5 py-1 rounded-lg bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 transition-all text-[8px] font-black">20%</button>
+                                    </div>
+                                </div>
+
+                                <div class="flex gap-2 mt-2 overflow-hidden">
+                                    <div class="flex-1 min-w-0 bg-black/40 rounded-xl border border-white/5 p-3 relative group focus-within:border-indigo-500/40 transition-all">
+                                        <span class="absolute left-3 top-1 text-[6.5px] font-black text-gray-600 uppercase tracking-widest">Amount</span>
+                                        <input type="number" id="trade-amount" value="0" class="w-full bg-transparent text-center font-black text-xl outline-none placeholder-gray-800 pt-1.5">
+                                    </div>
+                                    <div class="flex-1 min-w-0 bg-indigo-500/5 rounded-xl border border-indigo-500/10 p-1 relative group hover:border-indigo-500/30 transition-all">
+                                        <span class="absolute left-3 top-1 text-[6.5px] font-black text-indigo-500/40 uppercase tracking-widest">Asset</span>
+                                        <select id="trade-unit" class="appearance-none w-full h-full bg-transparent text-indigo-400 font-black text-lg px-2 pt-1.5 outline-none cursor-pointer text-center uppercase">
+                                            <option value="USDT">USDT</option>
+                                            <option value="USDC">USDC</option>
+                                        </select>
+                                        <i data-lucide="chevron-down" class="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-indigo-400/40 pointer-events-none"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 pt-3">
+                            <button onclick="placeOrder('BUY')" class="h-12 btn-premium trade-btn-long active:scale-95 flex items-center justify-center gap-3 text-xs">
+                                LONG <i data-lucide="trending-up" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="placeOrder('SELL')" class="h-12 btn-premium trade-btn-short active:scale-95 flex items-center justify-center gap-3 text-xs">
+                                SHORT <i data-lucide="trending-down" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- COLUMN A: POSITIONS & ORDERS -->
-            <div class="lg:col-span-8 flex flex-col gap-8">
+            <div class="lg:col-span-8 flex flex-col gap-8 order-2 lg:order-1">
                 <!-- Open Positions -->
                 <div class="glass-panel overflow-hidden">
-                    <div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                    <div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02] cursor-pointer group" onclick="toggleSection('positions-container', this)">
                         <div class="flex items-center gap-3">
                             <i data-lucide="layout-grid" class="w-5 h-5 text-indigo-400"></i>
                             <h2 class="text-sm font-black uppercase tracking-widest text-white">Active Positions</h2>
+                            <span id="pos-count-badge" class="ml-2 text-[9px] font-bold bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-500/20">0</span>
                         </div>
-                        <span class="text-[9px] font-bold bg-indigo-500/10 text-indigo-400 px-3 py-1 rounded-lg border border-indigo-500/20">LIVE MONITORING</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-600 transition-transform"></i>
                     </div>
-                    <div class="p-6">
+                    <div id="positions-container" class="transition-all duration-300">
                         <div id="positions-list" class="space-y-4">
                             <div class="text-center py-12 text-gray-500 italic text-xs">Waiting for market data connection...</div>
                         </div>
@@ -339,148 +490,32 @@
 
                 <!-- Pending Orders -->
                 <div class="glass-panel overflow-hidden">
-                    <div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                    <div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02] cursor-pointer group" onclick="toggleSection('orders-container', this)">
                         <div class="flex items-center gap-3">
                             <i data-lucide="clock" class="w-5 h-5 text-indigo-400"></i>
                             <h2 class="text-sm font-black uppercase tracking-widest text-white">Order Pipeline</h2>
+                            <span id="order-count-badge" class="ml-2 text-[9px] font-bold bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-500/20">0</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                             <div class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping"></div>
-                             <span class="text-[9px] font-bold text-indigo-400 uppercase">Synchronized</span>
-                        </div>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-600 transition-transform"></i>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-xs text-left responsive-table">
-                            <thead class="bg-black/20 text-gray-500 font-black uppercase tracking-widest">
-                                <tr>
-                                    <th class="py-5 px-6">Symbol</th>
-                                    <th class="py-5 px-6">ID</th>
-                                    <th class="py-5 px-6 text-center">Side</th>
-                                    <th class="py-5 px-6">Trigger</th>
-                                    <th class="py-5 px-6">Size</th>
-                                    <th class="py-5 px-6">Type</th>
-                                    <th class="py-5 px-6 text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="orders-list" class="divide-y divide-white/5 text-gray-300">
-                                <tr><td colspan="7" class="py-12 text-center opacity-30">No orders in queue</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- COLUMN B: QUICK TRADE & ACCOUNT -->
-            <div class="lg:col-span-4 flex flex-col gap-8">
-                <!-- Account Summary Card -->
-                <div class="glass-panel p-8 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent border-indigo-500/20">
-                    <div class="flex items-center justify-between mb-8">
-                        <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400">Portfolio Status</h3>
-                        <i data-lucide="wallet" class="w-4 h-4 text-indigo-400"></i>
-                    </div>
-                    <div class="space-y-6">
-                        <div>
-                            <p class="text-[10px] font-bold text-gray-500 uppercase mb-2">Total Balance</p>
-                            <p id="acc-balance" class="text-3xl font-black text-white">$0.00</p>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <p class="text-[10px] font-bold text-gray-500 uppercase mb-1">Available</p>
-                                <p id="acc-available" class="text-lg font-black text-indigo-400">$0.00</p>
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-bold text-gray-500 uppercase mb-1">Margin Ratio</p>
-                                <p id="acc-margin" class="text-lg font-black text-gray-100">0.00%</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Trade Terminal -->
-                <div class="glass-panel p-8 space-y-8">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400">Trade Terminal</h3>
-                        <span class="text-[8px] font-black px-2 py-1 bg-white/5 rounded text-gray-400 uppercase">Pyramid Mode Active</span>
-                    </div>
-
-                    <div class="space-y-5">
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Asset Pair</label>
-                            <input type="text" id="trade-pair" list="symbols-list" value="BTCUSDT" class="input-glass w-full h-12 text-center text-sm font-black tracking-widest uppercase">
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-2 relative">
-                                <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Target Entry</label>
-                                <input type="number" id="trade-entry" value="0" class="input-glass w-full h-12 text-center font-bold">
-                                <span class="absolute right-3 bottom-4 text-[8px] font-black text-gray-600">Limit</span>
-                            </div>
-                            <div class="space-y-2 relative">
-                                <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Mark Price</label>
-                                <input type="number" id="trade-mark" value="0" disabled class="input-glass w-full h-12 text-center font-bold bg-black/40 opacity-50">
-                                <span class="absolute right-3 bottom-4 text-[8px] font-black text-indigo-500">Live</span>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-2">
-                                <label class="text-[10px] font-black text-gray-500 uppercase ml-1 flex justify-between">Leverage <span id="disp-max-lev" class="text-indigo-400">x125</span></label>
-                                <input type="number" id="trade-leverage" value="20" class="input-glass w-full h-12 text-center font-bold">
-                            </div>
-                            <div class="space-y-2">
-                                <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Stop Loss</label>
-                                <input type="number" id="trade-sl" class="input-glass w-full h-12 text-center font-bold" placeholder="Auto">
-                            </div>
-                        </div>
-
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-success uppercase ml-1 flex items-center gap-1.5"><i data-lucide="layers" class="w-3 h-3"></i> Pyramiding Step (%)</label>
-                            <input type="number" id="trade-step-pct" value="1" step="0.1" class="input-glass w-full h-12 text-center font-bold border-success/20">
-                        </div>
-
-                        <div class="space-y-4 pt-4 border-t border-white/5">
-                            <div class="flex justify-between items-center text-[10px] font-black uppercase text-gray-500">
-                                <div class="flex items-center gap-1.5">
-                                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-indigo-500"></i>
-                                    <span>RISK AMOUNT</span>
-                                </div>
-                                <div class="flex gap-2">
-                                    <button onclick="setAmountPct(0.1)" class="px-4 py-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500 hover:text-white transition-all text-[10px] font-black">10%</button>
-                                    <button onclick="setAmountPct(0.15)" class="px-4 py-2 rounded-xl bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 transition-all text-[10px] font-black">15%</button>
-                                    <button onclick="setAmountPct(0.2)" class="px-4 py-2 rounded-xl bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 transition-all text-[10px] font-black">20%</button>
-                                </div>
-                            </div>
-
-                            <div class="flex gap-2 mt-4 overflow-hidden">
-                                <div class="flex-1 min-w-0 bg-black/40 rounded-2xl border border-white/5 p-4 relative group focus-within:border-indigo-500/40 transition-all">
-                                    <span class="absolute left-4 top-2 text-[7px] font-black text-gray-600 uppercase tracking-widest">Amount</span>
-                                    <input type="number" id="trade-amount" value="0" class="w-full bg-transparent text-center font-black text-2xl outline-none placeholder-gray-800 pt-2">
-                                </div>
-                                <div class="flex-1 min-w-0 bg-indigo-500/5 rounded-2xl border border-indigo-500/10 p-1 relative group hover:border-indigo-500/30 transition-all">
-                                    <span class="absolute left-4 top-2 text-[7px] font-black text-indigo-500/40 uppercase tracking-widest">Asset</span>
-                                    <select id="trade-unit" class="appearance-none w-full h-full bg-transparent text-indigo-400 font-black text-xl px-4 pt-2 outline-none cursor-pointer text-center uppercase">
-                                        <option value="USDT">USDT</option>
-                                        <option value="USDC">USDC</option>
-                                    </select>
-                                    <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-400/40 pointer-events-none"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 pt-4">
-                        <button onclick="placeOrder('BUY')" class="h-16 btn-premium trade-btn-long active:scale-95 flex items-center justify-center gap-3">
-                            LONG <i data-lucide="trending-up" class="w-5 h-5"></i>
-                        </button>
-                        <button onclick="placeOrder('SELL')" class="h-16 btn-premium trade-btn-short active:scale-95 flex items-center justify-center gap-3">
-                            SHORT <i data-lucide="trending-down" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-
-                    <div class="flex justify-between items-center px-1">
-                        <span class="text-[9px] font-bold text-gray-600 uppercase tracking-widest">Protocol Stats</span>
-                        <div class="flex items-center gap-2 text-[9px] font-bold text-success uppercase">
-                            <div class="w-1.5 h-1.5 rounded-full bg-success animate-pulse shadow-[0_0_10px_#10B981]"></div> System Operational
+                    <div id="orders-container" class="transition-all duration-300">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left responsive-table">
+                                <thead class="bg-black/20 text-gray-500 font-black uppercase tracking-widest">
+                                    <tr>
+                                        <th class="py-5 px-6">Symbol</th>
+                                        <th class="py-5 px-6">ID</th>
+                                        <th class="py-5 px-6 text-center">Side</th>
+                                        <th class="py-5 px-6">Trigger</th>
+                                        <th class="py-5 px-6">Size</th>
+                                        <th class="py-5 px-6">Type</th>
+                                        <th class="py-5 px-6 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="orders-list" class="divide-y divide-white/5 text-gray-300">
+                                    <tr><td colspan="7" class="py-12 text-center opacity-30">No orders in queue</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>

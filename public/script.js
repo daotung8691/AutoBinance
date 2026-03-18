@@ -26,25 +26,49 @@ function toggleSection(id, btn) {
     
     const isCurrentlyCollapsed = el.classList.contains('mobile-collapsed');
     
-    // Toggle the panel
     if (isCurrentlyCollapsed) {
         el.classList.remove('mobile-collapsed');
     } else {
         el.classList.add('mobile-collapsed');
     }
     
-    // Handle icon animations
-    const arrow = btn.querySelector('[data-lucide="chevron-down"]');
-    if (arrow) {
-        arrow.style.transform = isCurrentlyCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
-        arrow.style.transition = 'transform 0.3s ease';
+    // Rotate Chevron
+    const chevron = btn.querySelector('[data-lucide="chevron-down"]');
+    if (chevron) {
+        chevron.style.transform = isCurrentlyCollapsed ? 'rotate(0deg)' : 'rotate(-90deg)';
+        chevron.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+    }
+}
+
+function toggleCard(cardId, btn) {
+    const el = document.getElementById(cardId);
+    if (!el) return;
+    
+    const isShowing = !el.classList.contains('hidden');
+    
+    if (isShowing) {
+        el.classList.add('hidden');
+    } else {
+        el.classList.remove('hidden');
     }
     
-    const settings = btn.querySelector('[data-lucide="settings"]');
-    if (settings) {
-        settings.style.transform = isCurrentlyCollapsed ? 'rotate(90deg)' : 'rotate(0deg)';
-        settings.style.transition = 'transform 0.3s ease';
+    // Rotate Chevron
+    const chevron = btn.querySelector('[data-lucide="chevron-down"]');
+    if (chevron) {
+        chevron.style.transform = isShowing ? 'rotate(-90deg)' : 'rotate(0deg)';
+        chevron.style.transition = 'transform 0.2s ease';
     }
+}
+
+function updateCounters() {
+    const posCount = positions.filter(p => parseFloat(p.positionAmt) !== 0).length;
+    const ordCount = orders.length;
+
+    const posBadge = document.getElementById('pos-count-badge');
+    const ordBadge = document.getElementById('order-count-badge');
+
+    if (posBadge) posBadge.innerText = posCount;
+    if (ordBadge) ordBadge.innerText = ordCount;
 }
 
 function showNotify(msg, type = 'info') {
@@ -265,6 +289,7 @@ async function fetchData() {
         
         renderPositions();
         renderOrders();
+        updateCounters();
     } catch(err) {
         console.log(err);
     }
@@ -272,13 +297,16 @@ async function fetchData() {
 
 function renderPositions() {
     const list = document.getElementById('positions-list');
+    updateCounters();
+
     if(!positions || positions.length === 0) {
-        list.innerHTML = `<div class="text-center py-12 text-gray-500 italic text-xs border-2 border-dashed border-white/5 rounded-3xl">Waiting for active positions...</div>`;
+        list.innerHTML = `<div class="text-center py-12 text-gray-500 italic text-xs border-x border-white/5 mx-6">Waiting for active positions...</div>`;
         return;
     }
     
     let html = "";
-    for(let p of positions) {
+    for(let i = 0; i < positions.length; i++) {
+        const p = positions[i];
         const amt = parseFloat(p.positionAmt);
         if(amt === 0) continue;
         
@@ -291,75 +319,60 @@ function renderPositions() {
         let pnlPct = (unPnl / (Math.abs(amt)*entryPrice / lev))*100 || 0;
         
         const typeCol = isLong ? 'text-success' : 'text-danger';
-        const typeText = isLong ? 'LONG' : 'SHORT';
         const pnlCol = unPnl >= 0 ? 'text-success' : 'text-danger';
         const cClass = isLong ? 'pos-card-long' : 'pos-card-short';
         const pSign = unPnl >= 0 ? '+' : '';
-        
         const isShieldActive = trailingShields[p.symbol]?.active || false;
         const formattedSymbol = p.symbol.replace('USDT', '').replace('USDC', '');
-        
-        const existingSL = orders.find(o => o.symbol === p.symbol && o.type === 'STOP_MARKET');
-        const slValue = existingSL ? parseFloat(existingSL.stopPrice || existingSL.price).toFixed(2) : "";
 
         html += `
-        <div class="pos-card ${cClass}">
-            <div class="pos-card-content flex items-center justify-between relative z-10 gap-4">
-                <!-- Pair & Type -->
-                <div class="flex items-center gap-4 min-w-[140px]">
-                    <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center shrink-0 border border-white/5">
-                         <span class="text-[10px] font-black text-indigo-400">${formattedSymbol.charAt(0)}</span>
+        <div class="pos-card ${cClass} px-6 py-3 sm:py-4 grid grid-cols-3 items-center border-x-0 rounded-none first:mt-0 last:mb-0">
+            <!-- Part 1: Left Info Section -->
+            <div class="flex flex-col justify-center min-w-0 pr-2">
+                <div class="flex items-center gap-1.5 sm:gap-2">
+                    <span class="font-black text-xs sm:text-base text-white uppercase tracking-tight">${formattedSymbol}</span>
+                    <span class="${typeCol} text-[7px] sm:text-[9px] font-black border border-current/20 px-1 rounded bg-black/20">${lev}X</span>
+                </div>
+                <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1.5 sm:mt-2">
+                    <div class="flex items-center gap-1">
+                        <span class="text-gray-600 font-bold text-[7px] sm:text-[10px] uppercase shrink-0">E</span>
+                        <span class="text-white font-mono font-bold text-[8px] sm:text-[13px] tracking-tighter truncate">$${fNum(entryPrice, 1)}</span>
                     </div>
-                    <div class="flex flex-col">
-                        <span onclick="selectPairFromPosition('${p.symbol}', ${lev})" 
-                              class="font-black text-sm text-white tracking-tight cursor-pointer hover:text-indigo-400 transition-colors uppercase">${formattedSymbol}<span class="text-gray-600 font-bold">/USDT</span></span>
-                        <span class="${typeCol} text-[8px] font-black uppercase tracking-[0.2em] mt-0.5">${typeText} ${lev}X</span>
+                    <div class="flex items-center gap-1">
+                        <span class="text-gray-600 font-bold text-[7px] sm:text-[10px] uppercase shrink-0">V</span>
+                        <span class="text-white font-mono font-bold text-[8px] sm:text-[13px] tracking-tighter truncate">$${fNum(Math.abs(amt)*mark, 0)}</span>
                     </div>
                 </div>
+            </div>
 
-                <!-- Stats Grid -->
-                <div class="pos-stats-grid flex items-center gap-8 text-[10px] flex-1 justify-center">
-                    <div class="flex flex-col">
-                        <span class="text-gray-600 font-bold uppercase tracking-tighter mb-0.5">Entry Price</span>
-                        <span class="font-mono font-bold text-gray-300">$${fNum(entryPrice, 2)}</span>
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="text-gray-600 font-bold uppercase tracking-tighter mb-0.5">Position Value</span>
-                        <span class="font-mono font-bold text-gray-300">$${fNum(Math.abs(amt)*mark, 1)}</span>
-                    </div>
-                    <div class="flex flex-col">
-                         <span class="text-danger/60 font-black uppercase tracking-tighter mb-0.5">STOP LOSS</span>
-                         <div class="flex items-center gap-1 group">
-                             <span class="text-gray-600 font-bold">$</span>
-                             <input type="number" step="0.01" value="${slValue}" 
-                                    class="sl-input w-20 text-[10px] h-6 px-1 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all"
-                                    onchange="updateStoploss('${p.symbol}', this.value)">
-                         </div>
-                    </div>
+            <!-- Part 2: Central PNL Display -->
+            <div class="flex flex-col items-center justify-center min-w-0 px-2 overflow-hidden">
+                <div class="flex flex-col items-center sm:hidden w-full overflow-hidden">
+                    <span class="${pnlCol} font-black text-[clamp(10px,3.8vw,14px)] leading-none truncate">${pSign}${fNum(Math.abs(unPnl), 1)}$</span>
+                    <span class="${pnlCol} font-black text-[clamp(9px,3.2vw,12px)] mt-1.5 leading-none truncate">(${pSign}${pnlPct.toFixed(1)}%)</span>
                 </div>
+                <!-- PC Layout (Single Line) -->
+                <div class="hidden sm:flex flex-col items-center justify-center w-full overflow-hidden">
+                    <span class="${pnlCol} font-black text-[clamp(12px,2.2vw,22px)] tracking-tighter leading-tight truncate">
+                        ${pSign}${fNum(Math.abs(unPnl), 1)} USDT
+                    </span>
+                    <span class="${pnlCol} font-black text-[clamp(11px,1.6vw,16px)] tracking-tighter opacity-80 leading-none truncate">
+                        (${pSign}${pnlPct.toFixed(1)}%)
+                    </span>
+                </div>
+            </div>
 
-                <!-- PNL & Actions -->
-                <div class="pos-action-group flex items-center gap-6">
-                    <div class="text-right">
-                        <p class="text-xs font-black uppercase tracking-widest text-gray-600 mb-0.5">Net PNL</p>
-                        <p class="text-lg font-black ${pnlCol} tracking-tight leading-none">${pSign}$${fNum(Math.abs(unPnl), 2)}</p>
-                        <p class="text-[10px] font-black ${pnlCol} opacity-80 mt-1">${pSign}${pnlPct.toFixed(2)}%</p>
-                    </div>
-                    
-                    <div class="flex items-center gap-2">
-                        <button onclick="toggleShield(event, '${p.symbol}')"
-                                title="Trailing Shield"
-                                class="w-10 h-10 rounded-xl border transition-all active:scale-95 flex items-center justify-center
-                                ${isShieldActive ? 'bg-indigo-500 border-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-white/5 border-white/10 text-gray-500 hover:text-indigo-400'}">
-                            <i data-lucide="${isShieldActive ? 'shield-check' : 'shield'}" class="w-5 h-5"></i>
-                        </button>
-                        <button onclick="confirmCloseMarket(event, '${p.symbol}', ${amt}, ${unPnl})"
-                                title="Close Position"
-                                class="w-10 h-10 rounded-xl bg-danger/10 border border-danger/20 text-danger flex items-center justify-center active:scale-95 hover:bg-danger hover:text-white transition-all shadow-lg hover:shadow-danger/20">
-                            <i data-lucide="power" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                </div>
+            <!-- Part 3: Right Action Icons -->
+            <div class="flex items-center justify-end gap-1.5 sm:gap-3 shrink-0">
+                <button onclick="toggleShield(event, '${p.symbol}')"
+                        class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border transition-all active:scale-95 flex items-center justify-center
+                        ${isShieldActive ? 'bg-indigo-500 border-indigo-500 text-white shadow-lg' : 'bg-white/5 border-white/10 text-gray-500 hover:text-indigo-400'}">
+                    <i data-lucide="${isShieldActive ? 'shield-check' : 'shield'}" class="w-5 h-5 sm:w-7 h-7"></i>
+                </button>
+                <button onclick="confirmCloseMarket(event, '${p.symbol}', ${amt}, ${unPnl})"
+                        class="w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-danger/10 border border-danger/20 text-danger flex items-center justify-center active:scale-95 hover:bg-danger hover:text-white transition-all shadow-lg hover:shadow-danger/20">
+                    <i data-lucide="power" class="w-5 h-5 sm:w-7 h-7"></i>
+                </button>
             </div>
         </div>
         `;
@@ -669,8 +682,7 @@ async function checkAutoTrailing() {
         if (existingSL) {
             const slQty = parseFloat(existingSL.origQty);
             if (Math.abs(slQty - currentSize) > 0.0001) {
-                 // Update SL quantity to match full position
-                 await moveStopToBreakeven(symbol);
+                                  await moveStopToBreakeven(symbol);
             }
         }
     }
@@ -678,38 +690,43 @@ async function checkAutoTrailing() {
 
 function renderOrders() {
     const list = document.getElementById('orders-list');
+    updateCounters();
+
     if(!orders || orders.length === 0) {
         list.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-gray-500 italic text-xs">No pending orders in the pipeline</td></tr>`;
         return;
     }
     
     let html = "";
-    for(let o of orders) {
+    for(let i = 0; i < orders.length; i++) {
+        const o = orders[i];
         const isBuy = o.side === 'BUY';
         const col = isBuy ? 'text-success' : 'text-danger';
         const price = parseFloat(o.stopPrice || o.price);
         
         html += `
         <tr class="hover:bg-white/[0.01] transition-colors group">
-            <td class="py-4 px-6" data-label="Asset">
-                <div class="flex items-center gap-3">
-                    <div class="w-1.5 h-6 rounded-full ${isBuy ? 'bg-success/20' : 'bg-danger/20'} border-l-2 ${isBuy ? 'border-success' : 'border-danger'}"></div>
-                    <span class="font-black text-white tracking-tight uppercase">${o.symbol}</span>
+            <td class="py-3 px-6" data-label="Asset">
+                <div class="flex flex-col">
+                    <span class="font-black text-xs text-white uppercase tracking-tight">${o.symbol.replace('USDT','')}</span>
+                    <span class="${col} text-[8px] font-black uppercase tracking-tighter sm:hidden">${o.side} | ${o.type}</span>
                 </div>
             </td>
-            <td class="py-4 px-6 font-mono text-gray-500 text-[10px]" data-label="ID">#${String(o.orderId).slice(-6)}</td>
-            <td class="py-4 px-6 text-center" data-label="Side">
+            <td class="py-3 px-6 font-mono text-gray-500 text-[10px] hidden md:table-cell" data-label="ID">#${String(o.orderId).slice(-6)}</td>
+            <td class="py-3 px-6 text-center hidden md:table-cell" data-label="Side">
                 <span class="px-2 py-0.5 rounded-lg bg-white/5 font-black text-[9px] ${col}">${o.side}</span>
             </td>
-            <td class="py-4 px-6 font-mono font-bold text-gray-200" data-label="Trigger Price">$${fNum(price, 2)}</td>
-            <td class="py-4 px-6 text-gray-400 font-medium" data-label="Size">${fNum(o.origQty, 3)} <span class="text-[10px] opacity-40">Qty</span></td>
-            <td class="py-4 px-6" data-label="Type">
-                <span class="text-[10px] font-black text-indigo-400/80 uppercase tracking-tighter">${o.type.replace('_', ' ')}</span>
+            <td class="py-3 px-6 font-mono font-bold text-teal-400 text-center" data-label="Price">$${fNum(price, 2)}</td>
+            <td class="py-3 px-6 text-gray-400 font-medium" data-label="Size">
+                <span class="whitespace-nowrap">${fNum(o.origQty, 3)} <span class="text-[9px] opacity-40 uppercase">Qty</span></span>
             </td>
-            <td class="py-4 px-6 text-right" data-label="Action">
-                <button onclick="cancelOrder('${o.symbol}', ${o.orderId})" 
-                        class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-danger/10 hover:text-danger border border-transparent hover:border-danger/20 transition-all active:scale-90">
-                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            <td class="py-3 px-6 hidden md:table-cell" data-label="Type">
+                <span class="text-[9px] font-black text-indigo-400/80 uppercase tracking-tighter">${o.type.replace('_', ' ')}</span>
+            </td>
+            <td class="py-3 px-6 text-right" data-label="Action">
+                <button onclick="event.stopPropagation(); cancelOrder('${o.symbol}', ${o.orderId})" 
+                        class="ml-auto w-10 h-10 rounded-xl bg-danger/10 border border-danger/20 text-danger flex items-center justify-center hover:bg-danger hover:text-white transition-all shadow-lg hover:shadow-danger/20">
+                    <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </td>
         </tr>
